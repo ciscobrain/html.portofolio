@@ -1,0 +1,585 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="description" content="LifeLine — an offline pocket emergency companion. Step-by-step first-aid guidance that works with no internet, no installation, no account.">
+<title>LifeLine — Pocket Emergency Companion</title>
+<style>
+  :root {
+    --red: #d92b2b;
+    --red-dark: #b01f1f;
+    --bg: #f7f5f2;
+    --card: #ffffff;
+    --ink: #1d1d1f;
+    --muted: #6b6b70;
+    --line: #e6e2dc;
+    --ok: #1e7d43;
+    --warn: #b96a00;
+    --radius: 14px;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #141416;
+      --card: #1f1f23;
+      --ink: #f2f2f4;
+      --muted: #a3a3ab;
+      --line: #2e2e34;
+    }
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html { -webkit-text-size-adjust: 100%; }
+  body {
+    font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+    background: var(--bg);
+    color: var(--ink);
+    line-height: 1.55;
+  }
+  .wrap { max-width: 720px; margin: 0 auto; padding: 16px 16px 64px; }
+
+  header.app {
+    display: flex; align-items: center; gap: 12px;
+    padding: 14px 0 6px;
+  }
+  .logo {
+    width: 44px; height: 44px; border-radius: 12px; flex: 0 0 auto;
+    background: var(--red); color: #fff;
+    display: grid; place-items: center;
+    font-size: 24px; font-weight: 700;
+  }
+  header.app h1 { font-size: 1.35rem; letter-spacing: -0.01em; }
+  header.app p { color: var(--muted); font-size: 0.85rem; }
+
+  .banner {
+    background: var(--red); color: #fff;
+    border-radius: var(--radius);
+    padding: 14px 16px; margin: 14px 0 18px;
+    font-weight: 600; text-align: center;
+  }
+  .banner small { display: block; font-weight: 400; opacity: 0.9; margin-top: 2px; }
+
+  nav.tabs {
+    display: flex; gap: 8px; margin-bottom: 18px;
+    overflow-x: auto; padding-bottom: 4px;
+  }
+  nav.tabs button {
+    flex: 1 0 auto;
+    border: 1px solid var(--line);
+    background: var(--card); color: var(--ink);
+    border-radius: 999px; padding: 10px 18px;
+    font-size: 0.95rem; font-weight: 600; cursor: pointer;
+  }
+  nav.tabs button[aria-selected="true"] {
+    background: var(--ink); color: var(--bg); border-color: var(--ink);
+  }
+
+  .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+  @media (min-width: 560px) { .grid { grid-template-columns: 1fr 1fr 1fr; } }
+
+  .tile {
+    background: var(--card);
+    border: 1px solid var(--line);
+    border-radius: var(--radius);
+    padding: 16px 14px;
+    text-align: left; cursor: pointer;
+    color: var(--ink);
+    display: flex; flex-direction: column; gap: 6px;
+    min-height: 104px;
+    font: inherit;
+  }
+  .tile:active { transform: scale(0.98); }
+  .tile .icon { font-size: 26px; line-height: 1; }
+  .tile .name { font-weight: 700; font-size: 1rem; }
+  .tile .hint { color: var(--muted); font-size: 0.8rem; }
+
+  .panel { display: none; }
+  .panel.active { display: block; }
+
+  article.guide {
+    background: var(--card);
+    border: 1px solid var(--line);
+    border-radius: var(--radius);
+    padding: 20px 18px;
+    margin-top: 14px;
+  }
+  article.guide h2 { font-size: 1.25rem; display: flex; align-items: center; gap: 10px; }
+  article.guide .call-first {
+    background: color-mix(in srgb, var(--red) 12%, transparent);
+    color: var(--red);
+    border-radius: 10px; padding: 10px 12px;
+    font-weight: 700; margin: 12px 0;
+  }
+  @media (prefers-color-scheme: dark) {
+    article.guide .call-first { color: #ff8a8a; }
+  }
+  article.guide ol { padding-left: 22px; margin: 10px 0; }
+  article.guide ol li { margin: 10px 0; }
+  article.guide ol li strong { display: block; }
+  article.guide .dont {
+    border-left: 3px solid var(--warn);
+    padding: 8px 12px; margin-top: 14px;
+    color: var(--muted); font-size: 0.92rem;
+  }
+  .back {
+    background: none; border: none; color: var(--muted);
+    font: inherit; font-weight: 600; cursor: pointer; padding: 6px 0;
+  }
+
+  /* CPR metronome */
+  .metronome {
+    margin-top: 16px; padding: 16px;
+    border: 1px dashed var(--line); border-radius: var(--radius);
+    text-align: center;
+  }
+  .metronome p { color: var(--muted); font-size: 0.9rem; margin-bottom: 10px; }
+  #beatDot {
+    width: 84px; height: 84px; border-radius: 50%;
+    background: var(--line); margin: 0 auto 12px;
+    display: grid; place-items: center;
+    font-weight: 800; color: var(--muted);
+    transition: transform 80ms ease, background 80ms ease;
+  }
+  #beatDot.pulse { background: var(--red); color: #fff; transform: scale(1.12); }
+  .btn {
+    display: inline-block;
+    background: var(--red); color: #fff;
+    border: none; border-radius: 999px;
+    padding: 12px 26px; font-size: 1rem; font-weight: 700;
+    cursor: pointer;
+  }
+  .btn:active { background: var(--red-dark); }
+  .btn.secondary { background: var(--card); color: var(--ink); border: 1px solid var(--line); }
+
+  /* Medical ID */
+  form.med { display: grid; gap: 12px; margin-top: 14px; }
+  form.med label { font-weight: 600; font-size: 0.9rem; }
+  form.med input, form.med textarea, form.med select {
+    width: 100%; margin-top: 4px;
+    padding: 11px 12px;
+    border: 1px solid var(--line); border-radius: 10px;
+    background: var(--bg); color: var(--ink);
+    font: inherit;
+  }
+  form.med textarea { resize: vertical; min-height: 64px; }
+  .saved-note { color: var(--ok); font-weight: 600; font-size: 0.9rem; min-height: 1.3em; }
+
+  .idcard {
+    margin-top: 16px;
+    border: 2px solid var(--red);
+    border-radius: var(--radius);
+    overflow: hidden;
+    background: var(--card);
+  }
+  .idcard header {
+    background: var(--red); color: #fff;
+    padding: 8px 14px; font-weight: 800; letter-spacing: 0.04em;
+  }
+  .idcard dl { padding: 12px 14px; display: grid; grid-template-columns: auto 1fr; gap: 6px 14px; }
+  .idcard dt { color: var(--muted); font-size: 0.85rem; }
+  .idcard dd { font-weight: 600; }
+
+  /* Numbers table */
+  table.numbers { width: 100%; border-collapse: collapse; margin-top: 14px; background: var(--card); border-radius: var(--radius); overflow: hidden; border: 1px solid var(--line); }
+  table.numbers th, table.numbers td { padding: 11px 14px; text-align: left; border-bottom: 1px solid var(--line); }
+  table.numbers tr:last-child td { border-bottom: none; }
+  table.numbers th { font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.05em; color: var(--muted); }
+  table.numbers td.num { font-weight: 800; font-size: 1.05rem; color: var(--red); }
+
+  footer.disclaimer {
+    margin-top: 28px; padding-top: 14px;
+    border-top: 1px solid var(--line);
+    color: var(--muted); font-size: 0.8rem;
+  }
+  footer.disclaimer a { color: inherit; }
+
+  @media print {
+    nav.tabs, .banner, header.app p, .metronome, .btn, .back, footer.disclaimer { display: none !important; }
+    body { background: #fff; color: #000; }
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header class="app">
+    <div class="logo" aria-hidden="true">+</div>
+    <div>
+      <h1>LifeLine</h1>
+      <p>Pocket emergency companion &middot; works fully offline</p>
+    </div>
+  </header>
+
+  <div class="banner">
+    In a life-threatening emergency, call your local emergency number first.
+    <small>This guide helps you act while help is on the way.</small>
+  </div>
+
+  <nav class="tabs" role="tablist" aria-label="Sections">
+    <button role="tab" aria-selected="true" data-tab="emergencies">Emergencies</button>
+    <button role="tab" aria-selected="false" data-tab="medid">Medical ID</button>
+    <button role="tab" aria-selected="false" data-tab="numbers">Numbers</button>
+  </nav>
+
+  <!-- ============ EMERGENCIES ============ -->
+  <section id="emergencies" class="panel active">
+    <div class="grid" id="tileGrid">
+      <button class="tile" data-guide="cpr"><span class="icon">🫀</span><span class="name">CPR</span><span class="hint">Not breathing / no pulse</span></button>
+      <button class="tile" data-guide="choking"><span class="icon">🫁</span><span class="name">Choking</span><span class="hint">Can't breathe, cough or speak</span></button>
+      <button class="tile" data-guide="bleeding"><span class="icon">🩸</span><span class="name">Severe bleeding</span><span class="hint">Deep wound, heavy blood loss</span></button>
+      <button class="tile" data-guide="stroke"><span class="icon">🧠</span><span class="name">Stroke</span><span class="hint">Face droop, weak arm, slurred speech</span></button>
+      <button class="tile" data-guide="seizure"><span class="icon">⚡</span><span class="name">Seizure</span><span class="hint">Convulsions, unresponsive</span></button>
+      <button class="tile" data-guide="burns"><span class="icon">🔥</span><span class="name">Burns</span><span class="hint">Heat, chemical or electrical</span></button>
+      <button class="tile" data-guide="recovery"><span class="icon">🛌</span><span class="name">Recovery position</span><span class="hint">Unconscious but breathing</span></button>
+      <button class="tile" data-guide="heat"><span class="icon">🌡️</span><span class="name">Heatstroke</span><span class="hint">Hot skin, confusion, collapse</span></button>
+      <button class="tile" data-guide="allergy"><span class="icon">🐝</span><span class="name">Anaphylaxis</span><span class="hint">Severe allergic reaction</span></button>
+    </div>
+
+    <!-- CPR -->
+    <article class="guide" id="guide-cpr" hidden>
+      <button class="back" data-back>&larr; All emergencies</button>
+      <h2>🫀 CPR (adult)</h2>
+      <div class="call-first">Call emergency services (or have someone call) and get an AED if available.</div>
+      <ol>
+        <li><strong>Check response.</strong> Tap the shoulders and shout. If no response and no normal breathing, start CPR.</li>
+        <li><strong>Position your hands.</strong> Heel of one hand on the centre of the chest, other hand on top, fingers interlocked, arms straight.</li>
+        <li><strong>Push hard and fast.</strong> Compress at least 5&nbsp;cm (2&nbsp;in) deep, 100–120 times per minute. Let the chest fully rise between pushes. Use the metronome below.</li>
+        <li><strong>Rescue breaths (if trained).</strong> After 30 compressions, tilt the head back, lift the chin, give 2 breaths. If untrained, do continuous compressions only.</li>
+        <li><strong>Don't stop.</strong> Continue until the person breathes, an AED is ready, or professionals take over. Swap with another person every 2 minutes if you can.</li>
+      </ol>
+      <div class="metronome">
+        <p>Compression metronome — push on every beat (110 beats/min)</p>
+        <div id="beatDot">PUSH</div>
+        <button class="btn" id="metroBtn">Start metronome</button>
+      </div>
+      <p class="dont">Don't be afraid of pushing too hard — broken ribs heal; a stopped heart doesn't restart on its own.</p>
+    </article>
+
+    <!-- Choking -->
+    <article class="guide" id="guide-choking" hidden>
+      <button class="back" data-back>&larr; All emergencies</button>
+      <h2>🫁 Choking (adult / child over 1 year)</h2>
+      <div class="call-first">If the person cannot breathe, cough or speak, act immediately and have someone call emergency services.</div>
+      <ol>
+        <li><strong>Encourage coughing.</strong> If they can still cough or speak, let them keep coughing — don't slap yet.</li>
+        <li><strong>5 back blows.</strong> Lean them forward and give 5 sharp blows between the shoulder blades with the heel of your hand.</li>
+        <li><strong>5 abdominal thrusts.</strong> Stand behind them, fist just above the navel, grasp with the other hand, pull sharply inward and upward 5 times.</li>
+        <li><strong>Repeat.</strong> Alternate 5 back blows and 5 thrusts until the object comes out or the person collapses.</li>
+        <li><strong>If they collapse:</strong> start CPR and check the mouth for the object before each set of breaths.</li>
+      </ol>
+      <p class="dont">Don't do abdominal thrusts on infants under 1 year (use back blows and chest thrusts) or on pregnant people (use chest thrusts).</p>
+    </article>
+
+    <!-- Bleeding -->
+    <article class="guide" id="guide-bleeding" hidden>
+      <button class="back" data-back>&larr; All emergencies</button>
+      <h2>🩸 Severe bleeding</h2>
+      <div class="call-first">Call emergency services for any heavy or spurting bleed.</div>
+      <ol>
+        <li><strong>Press hard on the wound.</strong> Use a clean cloth, bandage or even a shirt. Direct, firm, continuous pressure is what stops bleeding.</li>
+        <li><strong>Don't peek.</strong> If blood soaks through, add more layers on top — never remove the first layer.</li>
+        <li><strong>Raise the limb</strong> above heart level if the wound is on an arm or leg and no fracture is suspected.</li>
+        <li><strong>Embedded object?</strong> Do not pull it out. Press around it and pad it in place.</li>
+        <li><strong>Watch for shock.</strong> Pale, cold, clammy, faint — lay the person down, keep them warm, keep pressing.</li>
+      </ol>
+      <p class="dont">Tourniquets are a last resort for life-threatening limb bleeding that pressure can't control — note the time you applied it.</p>
+    </article>
+
+    <!-- Stroke -->
+    <article class="guide" id="guide-stroke" hidden>
+      <button class="back" data-back>&larr; All emergencies</button>
+      <h2>🧠 Stroke — think F.A.S.T.</h2>
+      <div class="call-first">Every minute costs brain. Call emergency services at the first sign — do not wait to see if it passes.</div>
+      <ol>
+        <li><strong>F — Face.</strong> Ask them to smile. Does one side of the face droop?</li>
+        <li><strong>A — Arms.</strong> Ask them to raise both arms. Does one drift down or fail to lift?</li>
+        <li><strong>S — Speech.</strong> Ask them to repeat a simple sentence. Is it slurred or strange?</li>
+        <li><strong>T — Time.</strong> Any one sign means call emergency services NOW, and note the exact time symptoms started — treatment decisions depend on it.</li>
+        <li><strong>While waiting:</strong> keep them still and calm, lying with head and shoulders slightly raised. Nothing to eat or drink.</li>
+      </ol>
+      <p class="dont">Don't give aspirin for a suspected stroke — some strokes are bleeds, and aspirin makes those worse.</p>
+    </article>
+
+    <!-- Seizure -->
+    <article class="guide" id="guide-seizure" hidden>
+      <button class="back" data-back>&larr; All emergencies</button>
+      <h2>⚡ Seizure</h2>
+      <div class="call-first">Call emergency services if the seizure lasts over 5 minutes, repeats, follows an injury, or it's their first one.</div>
+      <ol>
+        <li><strong>Protect, don't restrain.</strong> Clear hard objects away and put something soft under the head.</li>
+        <li><strong>Time it.</strong> Start a timer the moment it begins.</li>
+        <li><strong>Nothing in the mouth.</strong> They cannot swallow their tongue — putting objects in the mouth causes injury.</li>
+        <li><strong>Afterwards:</strong> roll them into the recovery position, stay with them, speak calmly. Confusion after a seizure is normal.</li>
+      </ol>
+      <p class="dont">Don't hold the person down and don't give food or water until they are fully alert.</p>
+    </article>
+
+    <!-- Burns -->
+    <article class="guide" id="guide-burns" hidden>
+      <button class="back" data-back>&larr; All emergencies</button>
+      <h2>🔥 Burns</h2>
+      <div class="call-first">Call emergency services for burns that are large, deep, on the face/hands/genitals, or caused by chemicals or electricity.</div>
+      <ol>
+        <li><strong>Stop the burning.</strong> Remove the person from the source. For chemical burns, brush off dry chemical first, then flush.</li>
+        <li><strong>Cool with running water</strong> for at least 20 minutes. Cool water — not ice.</li>
+        <li><strong>Remove jewellery and loose clothing</strong> near the burn before it swells — but never peel off anything stuck to the skin.</li>
+        <li><strong>Cover loosely</strong> with cling film or a clean, non-fluffy cloth.</li>
+      </ol>
+      <p class="dont">No ice, no butter, no toothpaste, no creams, and never burst blisters.</p>
+    </article>
+
+    <!-- Recovery position -->
+    <article class="guide" id="guide-recovery" hidden>
+      <button class="back" data-back>&larr; All emergencies</button>
+      <h2>🛌 Recovery position</h2>
+      <div class="call-first">For someone unconscious but breathing normally. Call emergency services, then position them.</div>
+      <ol>
+        <li><strong>Kneel beside them.</strong> Place the arm nearest you at a right angle, palm up.</li>
+        <li><strong>Far arm across the chest,</strong> back of their hand against their near cheek — hold it there.</li>
+        <li><strong>Bend the far knee</strong> up, then pull it toward you to roll them onto their side.</li>
+        <li><strong>Tilt the head back</strong> slightly to keep the airway open; adjust the top leg to stop them rolling.</li>
+        <li><strong>Check breathing regularly</strong> until help arrives. If breathing stops, roll them onto their back and start CPR.</li>
+      </ol>
+      <p class="dont">Don't leave them on their back — the tongue or vomit can block the airway.</p>
+    </article>
+
+    <!-- Heatstroke -->
+    <article class="guide" id="guide-heat" hidden>
+      <button class="back" data-back>&larr; All emergencies</button>
+      <h2>🌡️ Heatstroke</h2>
+      <div class="call-first">Hot skin plus confusion, collapse or seizures is heatstroke — a true emergency. Call for help immediately.</div>
+      <ol>
+        <li><strong>Move to shade or a cool room.</strong> Remove excess clothing.</li>
+        <li><strong>Cool aggressively.</strong> Soak with cool water, fan them, put cold packs on neck, armpits and groin. Immersion in cool water is best if available.</li>
+        <li><strong>If fully alert,</strong> give small sips of water — nothing if drowsy or confused.</li>
+        <li><strong>If unconscious but breathing,</strong> use the recovery position and keep cooling.</li>
+      </ol>
+      <p class="dont">Don't give paracetamol or aspirin — they don't help heatstroke and can cause harm.</p>
+    </article>
+
+    <!-- Anaphylaxis -->
+    <article class="guide" id="guide-allergy" hidden>
+      <button class="back" data-back>&larr; All emergencies</button>
+      <h2>🐝 Anaphylaxis (severe allergic reaction)</h2>
+      <div class="call-first">Swelling of face/throat, wheezing, hives spreading fast, collapse — call emergency services immediately.</div>
+      <ol>
+        <li><strong>Use their adrenaline auto-injector (EpiPen) NOW</strong> if they have one — outer mid-thigh, hold 3 seconds. Don't wait to "see how it goes".</li>
+        <li><strong>Position:</strong> lying down with legs raised; sitting up if breathing is hard. Never stand them up suddenly.</li>
+        <li><strong>Second dose</strong> after 5 minutes if there's no improvement and a second injector is available.</li>
+        <li><strong>Even if they recover,</strong> they must go to hospital — reactions can return hours later.</li>
+      </ol>
+      <p class="dont">Antihistamines alone do not treat anaphylaxis — adrenaline is the only first-line treatment.</p>
+    </article>
+  </section>
+
+  <!-- ============ MEDICAL ID ============ -->
+  <section id="medid" class="panel">
+    <p style="color:var(--muted); font-size:0.92rem;">
+      Fill in your details once — they are stored <strong>only on this device</strong> (nothing is sent anywhere).
+      In an emergency, responders can open this page to see your critical medical information.
+    </p>
+
+    <form class="med" id="medForm">
+      <label>Full name
+        <input type="text" name="name" autocomplete="name" placeholder="e.g. Mario Tetty">
+      </label>
+      <label>Date of birth
+        <input type="date" name="dob">
+      </label>
+      <label>Blood type
+        <select name="blood">
+          <option value="">Unknown</option>
+          <option>O−</option><option>O+</option>
+          <option>A−</option><option>A+</option>
+          <option>B−</option><option>B+</option>
+          <option>AB−</option><option>AB+</option>
+        </select>
+      </label>
+      <label>Allergies
+        <textarea name="allergies" placeholder="e.g. penicillin, peanuts"></textarea>
+      </label>
+      <label>Current medications
+        <textarea name="meds" placeholder="e.g. insulin, blood thinners"></textarea>
+      </label>
+      <label>Medical conditions
+        <textarea name="conditions" placeholder="e.g. diabetes, epilepsy, asthma"></textarea>
+      </label>
+      <label>Emergency contact (name &amp; phone)
+        <input type="text" name="contact" placeholder="e.g. Ana Tetty — +123 456 789">
+      </label>
+      <div>
+        <button type="submit" class="btn">Save on this device</button>
+        <button type="button" class="btn secondary" id="printBtn">Print card</button>
+        <button type="button" class="btn secondary" id="clearBtn">Clear</button>
+      </div>
+      <p class="saved-note" id="savedNote" role="status"></p>
+    </form>
+
+    <div class="idcard" id="idCard" hidden>
+      <header>⚕ MEDICAL ID — IN CASE OF EMERGENCY</header>
+      <dl>
+        <dt>Name</dt><dd id="c-name">—</dd>
+        <dt>Born</dt><dd id="c-dob">—</dd>
+        <dt>Blood</dt><dd id="c-blood">—</dd>
+        <dt>Allergies</dt><dd id="c-allergies">—</dd>
+        <dt>Medications</dt><dd id="c-meds">—</dd>
+        <dt>Conditions</dt><dd id="c-conditions">—</dd>
+        <dt>Contact</dt><dd id="c-contact">—</dd>
+      </dl>
+    </div>
+  </section>
+
+  <!-- ============ NUMBERS ============ -->
+  <section id="numbers" class="panel">
+    <p style="color:var(--muted); font-size:0.92rem;">
+      Emergency numbers around the world. When travelling, <strong>112</strong> works in most of the world
+      and is redirected on virtually all mobile networks.
+    </p>
+    <table class="numbers">
+      <thead><tr><th>Region</th><th>Number</th></tr></thead>
+      <tbody>
+        <tr><td>Europe (universal)</td><td class="num">112</td></tr>
+        <tr><td>United States / Canada / Mexico</td><td class="num">911</td></tr>
+        <tr><td>United Kingdom</td><td class="num">999</td></tr>
+        <tr><td>Australia</td><td class="num">000</td></tr>
+        <tr><td>New Zealand</td><td class="num">111</td></tr>
+        <tr><td>Japan (ambulance/fire)</td><td class="num">119</td></tr>
+        <tr><td>China (ambulance)</td><td class="num">120</td></tr>
+        <tr><td>India</td><td class="num">112</td></tr>
+        <tr><td>Brazil (ambulance)</td><td class="num">192</td></tr>
+        <tr><td>South Africa (from mobile)</td><td class="num">112</td></tr>
+      </tbody>
+    </table>
+  </section>
+
+  <footer class="disclaimer">
+    LifeLine is an educational first-aid reference, not a substitute for professional medical
+    training or care. Guidance follows widely published first-aid guidelines (e.g. Red Cross,
+    resuscitation councils). Consider taking a certified first-aid course — hands that have
+    practised save the most lives. Save this page to your device: it needs no internet to work.
+  </footer>
+</div>
+
+<script>
+(function () {
+  "use strict";
+
+  /* ---------- Tabs ---------- */
+  var tabs = document.querySelectorAll("nav.tabs button");
+  var panels = document.querySelectorAll(".panel");
+  tabs.forEach(function (tab) {
+    tab.addEventListener("click", function () {
+      tabs.forEach(function (t) { t.setAttribute("aria-selected", t === tab ? "true" : "false"); });
+      panels.forEach(function (p) { p.classList.toggle("active", p.id === tab.dataset.tab); });
+      stopMetronome();
+    });
+  });
+
+  /* ---------- Emergency guides ---------- */
+  var grid = document.getElementById("tileGrid");
+  var guides = document.querySelectorAll("article.guide");
+
+  function showGuide(id) {
+    grid.hidden = true;
+    guides.forEach(function (g) { g.hidden = (g.id !== "guide-" + id); });
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  }
+  function showGrid() {
+    grid.hidden = false;
+    guides.forEach(function (g) { g.hidden = true; });
+    stopMetronome();
+  }
+  document.querySelectorAll(".tile").forEach(function (tile) {
+    tile.addEventListener("click", function () { showGuide(tile.dataset.guide); });
+  });
+  document.querySelectorAll("[data-back]").forEach(function (btn) {
+    btn.addEventListener("click", showGrid);
+  });
+
+  /* ---------- CPR metronome: 110 BPM ---------- */
+  var metroBtn = document.getElementById("metroBtn");
+  var beatDot = document.getElementById("beatDot");
+  var audioCtx = null, metroTimer = null;
+
+  function beep() {
+    if (!audioCtx) return;
+    var osc = audioCtx.createOscillator();
+    var gain = audioCtx.createGain();
+    osc.frequency.value = 880;
+    gain.gain.setValueAtTime(0.4, audioCtx.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.12);
+    osc.connect(gain).connect(audioCtx.destination);
+    osc.start();
+    osc.stop(audioCtx.currentTime + 0.13);
+  }
+  function tick() {
+    beep();
+    beatDot.classList.add("pulse");
+    setTimeout(function () { beatDot.classList.remove("pulse"); }, 140);
+  }
+  function startMetronome() {
+    try {
+      if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+      if (audioCtx.state === "suspended") audioCtx.resume();
+    } catch (e) { /* no audio available — visual pulse still works */ }
+    tick();
+    metroTimer = setInterval(tick, Math.round(60000 / 110)); // 110 BPM
+    metroBtn.textContent = "Stop metronome";
+  }
+  function stopMetronome() {
+    if (metroTimer) { clearInterval(metroTimer); metroTimer = null; }
+    if (metroBtn) metroBtn.textContent = "Start metronome";
+  }
+  if (metroBtn) {
+    metroBtn.addEventListener("click", function () {
+      metroTimer ? stopMetronome() : startMetronome();
+    });
+  }
+
+  /* ---------- Medical ID (localStorage only) ---------- */
+  var KEY = "lifeline.medid.v1";
+  var form = document.getElementById("medForm");
+  var note = document.getElementById("savedNote");
+  var card = document.getElementById("idCard");
+  var fields = ["name", "dob", "blood", "allergies", "meds", "conditions", "contact"];
+
+  function renderCard(data) {
+    var hasAny = fields.some(function (f) { return data[f]; });
+    card.hidden = !hasAny;
+    fields.forEach(function (f) {
+      document.getElementById("c-" + f).textContent = data[f] || "—";
+    });
+  }
+  function load() {
+    var data = {};
+    try { data = JSON.parse(localStorage.getItem(KEY)) || {}; } catch (e) {}
+    fields.forEach(function (f) { if (form.elements[f]) form.elements[f].value = data[f] || ""; });
+    renderCard(data);
+  }
+  form.addEventListener("submit", function (ev) {
+    ev.preventDefault();
+    var data = {};
+    fields.forEach(function (f) { data[f] = form.elements[f].value.trim(); });
+    try {
+      localStorage.setItem(KEY, JSON.stringify(data));
+      note.textContent = "Saved on this device ✓";
+    } catch (e) {
+      note.textContent = "Could not save (storage unavailable) — you can still print the card.";
+    }
+    renderCard(data);
+    setTimeout(function () { note.textContent = ""; }, 3000);
+  });
+  document.getElementById("clearBtn").addEventListener("click", function () {
+    try { localStorage.removeItem(KEY); } catch (e) {}
+    form.reset();
+    renderCard({});
+    note.textContent = "Cleared.";
+    setTimeout(function () { note.textContent = ""; }, 2000);
+  });
+  document.getElementById("printBtn").addEventListener("click", function () {
+    window.print();
+  });
+  load();
+})();
+</script>
+</body>
+</html>
