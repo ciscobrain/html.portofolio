@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <title>Aide Sociale Vaud — Assistant</title>
+  <meta name="description" content="Assistant gratuit qui vous guide pas à pas vers les aides sociales du canton de Vaud : RI, subsides, PC Familles, bourses, logement et plus.">
+  <meta name="theme-color" content="#00695c">
+
+  <!-- PWA : installable sur iPhone et Android depuis le navigateur -->
+  <link rel="manifest" href="manifest.webmanifest">
+  <link rel="icon" href="icons/icon-192.png">
+  <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="Aide Vaud">
+
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <header class="app-header">
+    <div class="app-title">
+      <span class="app-logo" aria-hidden="true">🤝</span>
+      <div>
+        <h1>Aide Sociale Vaud</h1>
+        <p>Votre assistant pour les aides du canton de Vaud</p>
+      </div>
+    </div>
+    <button id="btn-tts" class="icon-btn" title="Activer / désactiver la lecture vocale des réponses" aria-pressed="false">🔇</button>
+  </header>
+
+  <main id="chat" class="chat" aria-live="polite"></main>
+
+  <div id="quick-replies" class="quick-replies"></div>
+
+  <footer class="composer">
+    <button id="btn-mic" class="icon-btn mic" title="Parler au lieu d'écrire">🎤</button>
+    <input id="input" type="text" placeholder="Écrivez votre situation ici…"
+           autocomplete="off" enterkeyhint="send" aria-label="Votre message">
+    <button id="btn-send" class="icon-btn send" title="Envoyer">➤</button>
+  </footer>
+
+  <div id="update-banner" class="update-banner" hidden>
+    ✅ Application mise à jour automatiquement
+  </div>
+
+  <script src="data.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
