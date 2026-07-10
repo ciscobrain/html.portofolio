@@ -184,6 +184,19 @@ body {
   50% { transform: scale(1.12); }
 }
 
+/* ---------- Indicateur « l'IA réfléchit » ---------- */
+.msg.typing {
+  color: var(--vert-fonce);
+  font-weight: 700;
+  letter-spacing: 3px;
+  animation: clignote 1s infinite;
+}
+
+@keyframes clignote {
+  0%, 100% { opacity: 0.35; }
+  50% { opacity: 1; }
+}
+
 /* ---------- Bandeau de mise à jour ---------- */
 .update-banner {
   position: fixed;

@@ -36,6 +36,40 @@ et les guide **étape par étape** jusqu'au dépôt de leur demande.
 > ⚠️ Informations indicatives : seuls les organismes officiels (CSR, vd.ch)
 > confirment les droits. Vérifiez toujours auprès d'eux.
 
+## 🤖 Mode IA : conversations vraiment libres (API Claude)
+
+L'app fonctionne selon deux modes :
+
+- **Mode guidé** (par défaut, 0 CHF) : boutons + reconnaissance de mots-clés,
+  100 % hors ligne, aucune configuration.
+- **Mode IA** (optionnel) : les messages écrits ou dictés librement sont
+  compris par **Claude** (l'IA d'Anthropic), spécialisée dans les aides
+  vaudoises grâce à un prompt système dédié. Si le serveur IA ne répond pas,
+  l'app se replie automatiquement sur le mode guidé.
+
+### Activer le mode IA (~10 minutes)
+
+La clé API ne doit jamais être mise dans l'application publique. Un petit
+serveur intermédiaire gratuit (Cloudflare Worker) la garde secrète :
+
+1. Créer une clé API sur [console.anthropic.com](https://console.anthropic.com)
+   (recharger p. ex. 20 CHF de crédit)
+2. Créer un compte gratuit sur [dash.cloudflare.com](https://dash.cloudflare.com)
+   → Workers & Pages → Create Worker → coller le contenu de
+   [`serveur-ia/worker.js`](serveur-ia/worker.js)
+3. Dans les réglages du worker : ajouter le **secret** `ANTHROPIC_API_KEY`
+   et (conseillé) la variable `ORIGINE_AUTORISEE` = `https://ciscobrain.github.io`
+4. Copier l'URL du worker dans [`config.js`](config.js) → `IA_URL`, incrémenter
+   `VERSION` dans `sw.js` et pousser
+
+### Coût du mode IA
+
+Le worker utilise `claude-opus-4-8` (~0,01–0,05 CHF par conversation selon la
+longueur). Pour réduire les coûts au lancement, remplacer `MODELE` dans
+`serveur-ia/worker.js` par `claude-haiku-4-5` (~5× moins cher). L'hébergement
+Cloudflare Workers est gratuit jusqu'à 100 000 requêtes/jour. Le budget de
+200 CHF couvre donc largement des milliers de conversations.
+
 ## 🚀 Mise en ligne (0 CHF)
 
 1. Activer **GitHub Pages** sur ce dépôt (Settings → Pages → branche principale)
@@ -74,7 +108,9 @@ et les guide **étape par étape** jusqu'au dépôt de leur demande.
 
 - `index.html` — structure de l'app
 - `styles.css` — interface (gros boutons, contraste élevé)
-- `app.js` — moteur de conversation, voix, mises à jour
+- `app.js` — moteur de conversation (guidé + IA), voix, mises à jour
 - `data.js` — base de connaissances des aides vaudoises (facile à compléter)
+- `config.js` — configuration (URL du serveur IA)
+- `serveur-ia/worker.js` — serveur intermédiaire pour l'API Claude (Cloudflare)
 - `sw.js` — service worker (hors ligne + mises à jour automatiques)
 - `manifest.webmanifest` + `icons/` — installation sur iPhone/Android

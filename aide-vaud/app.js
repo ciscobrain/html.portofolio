@@ -17,6 +17,10 @@
   let aideCourante = null;   // id de l'aide en cours de consultation
   let etapeCourante = 0;     // index de l'étape dans le guide pas à pas
   let ttsActif = false;      // lecture vocale des réponses
+  let historiqueIA = [];     // historique envoyé à l'IA (mode conversation libre)
+  let iaEnCours = false;     // une requête IA est en cours
+
+  const iaActive = typeof CONFIG !== "undefined" && CONFIG.IA_URL;
 
   /* ---------- Affichage ---------- */
 
@@ -205,12 +209,23 @@
 
   function traiterEntree(texte) {
     texte = texte.trim();
-    if (!texte) return;
+    if (!texte || iaEnCours) return;
     user(texte);
     inputEl.value = "";
 
     const t = normaliser(texte);
-    if (/(bonjour|salut|hello|menu|recommencer|accueil)/.test(t)) {
+    if (/(menu|recommencer|accueil)/.test(t)) {
+      accueil(false);
+      return;
+    }
+
+    // Conversation libre avec l'IA quand un serveur est configuré
+    if (iaActive) {
+      repondreAvecIA(texte);
+      return;
+    }
+
+    if (/(bonjour|salut|hello)/.test(t)) {
       accueil(false);
       return;
     }
@@ -220,6 +235,11 @@
       return;
     }
 
+    repondreParMotsCles(texte);
+  }
+
+  /* Mode guidé : compréhension par mots-clés */
+  function repondreParMotsCles(texte) {
     const id = comprendre(texte);
     if (id) {
       bot("Je pense que cette aide peut vous concerner :");
@@ -235,6 +255,52 @@
         })
       );
     }
+  }
+
+  /* Mode IA : conversation libre via le serveur intermédiaire (API Claude) */
+  function repondreAvecIA(texte) {
+    historiqueIA.push({ role: "user", content: texte });
+    // Borne l'historique côté client (le serveur re-vérifie de son côté)
+    if (historiqueIA.length > 24) historiqueIA = historiqueIA.slice(-24);
+
+    iaEnCours = true;
+    proposer([]);
+    const indicateur = ajouterMessage("…", "bot", false);
+    indicateur.classList.add("typing");
+
+    const controleur = new AbortController();
+    const minuteur = setTimeout(function () { controleur.abort(); }, 30000);
+
+    fetch(CONFIG.IA_URL, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ messages: historiqueIA }),
+      signal: controleur.signal
+    })
+      .then(function (rep) {
+        if (!rep.ok) throw new Error("HTTP " + rep.status);
+        return rep.json();
+      })
+      .then(function (donnees) {
+        if (!donnees.texte) throw new Error("Réponse vide");
+        indicateur.remove();
+        historiqueIA.push({ role: "assistant", content: donnees.texte });
+        bot(donnees.texte);
+        proposer([
+          { label: "🏠 Menu des aides", action: function () { accueil(false); } }
+        ]);
+      })
+      .catch(function () {
+        // Repli : le mode guidé fonctionne toujours, même sans serveur
+        indicateur.remove();
+        historiqueIA.pop();
+        bot("Le service IA ne répond pas pour le moment — je continue en mode guidé. 🙂");
+        repondreParMotsCles(texte);
+      })
+      .finally(function () {
+        clearTimeout(minuteur);
+        iaEnCours = false;
+      });
   }
 
   sendBtn.addEventListener("click", function () { traiterEntree(inputEl.value); });

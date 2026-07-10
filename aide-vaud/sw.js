@@ -4,7 +4,7 @@
  * les mises à jour : incrémentez VERSION à chaque nouvelle publication.
  */
 
-const VERSION = "v1.0.0";
+const VERSION = "v1.1.0";
 const CACHE = "aide-vaud-" + VERSION;
 
 const FICHIERS = [
@@ -12,6 +12,7 @@ const FICHIERS = [
   "./index.html",
   "./styles.css",
   "./app.js",
+  "./config.js",
   "./data.js",
   "./manifest.webmanifest",
   "./icons/icon-192.png",
