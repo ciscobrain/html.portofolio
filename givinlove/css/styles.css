@@ -347,7 +347,7 @@ p  { margin: 0 0 1.1em; color: var(--ink-soft); }
 
 /* ---------- Split image/texte ---------- */
 .media-frame { position: relative; border-radius: var(--radius); overflow: hidden; box-shadow: var(--shadow-lg); }
-.media-frame img { width: 100%; height: 100%; object-fit: cover; aspect-ratio: 4 / 3.4; }
+.media-frame > img { width: 100%; height: 100%; object-fit: cover; aspect-ratio: 4 / 3.4; }
 .media-frame .frame-badge {
   position: absolute; left: 1.2rem; bottom: 1.2rem; right: 1.2rem;
   display: flex; align-items: center; gap: .9rem;
@@ -598,6 +598,19 @@ p  { margin: 0 0 1.1em; color: var(--ink-soft); }
 .admin-del { border: 0; background: transparent; color: #E53935; cursor: pointer; font-size: .85rem; font-weight: 600; }
 .login-card { max-width: 430px; margin: 4rem auto; }
 @media (max-width: 800px) { .admin-shell { grid-template-columns: 1fr; } .admin-nav { display: flex; overflow-x: auto; gap: .4rem; border-right: 0; border-bottom: 1px solid var(--line); padding: .8rem; } .admin-nav button { width: auto; white-space: nowrap; } }
+
+
+/* ---------- Logo officiel ---------- */
+.brand-logo-img {
+  width: 44px; height: 44px; flex: none; border-radius: 12px;
+  background: #fff; padding: 3px; object-fit: contain;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, .18);
+}
+.footer-slogan {
+  font-family: var(--font-title); font-style: italic;
+  color: var(--or-clair) !important; font-size: .96rem !important;
+  margin-top: -.2rem;
+}
 
 /* ---------- Divers ---------- */
 .back-to-top {
