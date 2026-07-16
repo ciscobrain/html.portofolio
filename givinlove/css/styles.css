@@ -612,6 +612,19 @@ p  { margin: 0 0 1.1em; color: var(--ink-soft); }
   margin-top: -.2rem;
 }
 
+
+/* ---------- Photos des fondateurs ---------- */
+.founders-grid { columns: 2 320px; column-gap: 1.1rem; margin-top: 2.4rem; }
+.founder-photo {
+  break-inside: avoid; margin: 0 0 1.1rem;
+  background: var(--bg-card); border: 1px solid var(--line);
+  border-radius: var(--radius-sm); overflow: hidden; box-shadow: var(--shadow);
+  transition: transform .35s var(--ease), box-shadow .35s var(--ease);
+}
+.founder-photo:hover { transform: translateY(-5px); box-shadow: var(--shadow-lg); }
+.founder-photo img { width: 100%; display: block; }
+.founder-photo figcaption { padding: .85rem 1.05rem; font-size: .88rem; color: var(--ink-soft); }
+
 /* ---------- Divers ---------- */
 .back-to-top {
   position: fixed; right: 1.4rem; bottom: 1.4rem; z-index: 80;
